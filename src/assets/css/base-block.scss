@@ -1,0 +1,88 @@
+// 基本增删改查样式表
+
+@import "~@/assets/css/core/index";
+
+.base-block {
+  width: 100%;
+  min-width: 600px;
+  padding: 20px;
+  background: #fbfbfb;
+  display: flex;
+  flex-direction: row;
+
+  a {
+    text-decoration: none;
+    color: #409EFF
+  }
+
+  .el-date-editor {
+
+    &.el-input,
+    &.el-input__inner {
+      width: 100%;
+    }
+  }
+}
+
+.base-block-left {
+  flex: 1;
+  width: 0;
+  overflow: hidden;
+}
+
+.base-block-right {
+  width: 450px;
+  margin-left: 20px;
+
+  .el-form--label-top .el-form-item__label {
+    float: none;
+    display: inline-block;
+    text-align: left;
+    padding-bottom: 0px;
+  }
+}
+
+.base-block-table {
+  margin-bottom: 20px;
+}
+
+.base-block-add {
+  padding: $padding;
+
+  a {
+    text-decoration: none;
+    color: #409EFF
+  }
+}
+
+.el-main {
+  position: relative;
+
+  .base-block {
+    height: 100%;
+    position: absolute;
+
+    .base-block-right,
+    .base-block-left {
+      overflow-y: auto;
+    }
+
+    .base-block-right {
+      .el-input__inner {
+        width: 240px;
+      }
+    }
+  }
+}
+
+.strikethrough-table-row {
+  font-style: italic;
+  text-decoration: line-through;
+}
+
+.zzu-main .el-table thead th,
+.zzu-main .el-table thead tr {
+  background: #607d8b;
+  color: white;
+  border-right: 1px solid #607d8b;
+}

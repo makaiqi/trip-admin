@@ -1,0 +1,535 @@
+<!--
+	餐厅信息录入
+ -->
+
+<template>
+  <div class="base-block">
+    <div class="base-block-left">
+      <el-card>
+        <div slot="header" class="clearfix">
+          <span class="el-icon-plus">{{ tableList.title }}</span>
+          <span class="line-gray">(共{{ page.total }}数据)</span>
+        </div>
+
+        <div class="base-block-container">
+          <el-form ref="formSearch" :inline="true">
+            <el-form-item>
+              <el-input clearable v-model="tableList.query.search" placeholder="请输入项目名称"></el-input>
+            </el-form-item>
+            <!-- <el-form-item>
+              <zzu-city-select v-model="tableList.query.cityId" placeholder="请选择城市名"></zzu-city-select>
+            </el-form-item> -->
+            <el-form-item>
+              <el-button :disabled="tableList.selection.length == 0" icon="el-icon-delete" @click="deleteData">删除</el-button>
+            </el-form-item>
+          </el-form>
+
+          <el-table
+            ref="multipleTable"
+            :data="tableList.data.rows"
+            border
+            stripe
+            tooltip-effect="dark"
+            style="width: 100%"
+            @selection-change="handleSelectionChange"
+            class="base-block-table">
+            <el-table-column :type="item.type" :fixed="item.fixed" :width="item.width || 150" :label="item.title" :sortable="item.sortable" :prop="item.key" v-for="item in tableList.columns" :key="item.key"  :show-overflow-tooltip="true">
+            </el-table-column>
+          </el-table>
+
+          <el-pagination background
+            @size-change="handlePageSizeChange"
+            @current-change="handlePageCurrentChange"
+            :current-page="page.currentPage"
+            :page-sizes="page.pageSizes"
+            :page-size="page.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="page.total">
+          </el-pagination>
+        </div>
+      </el-card>
+    </div>
+
+    <div class="base-block-right">
+      <el-card >
+        <el-tabs type="border-card"> 
+          <el-tab-pane label="添加游玩项目">
+              <el-form label-position="top" ref="formLeft" :model="formAddOrUpdate" :rules="ruleAddOrUpdate" label-width="80px">
+                <el-form-item label="项目名称" prop="funName">
+                  <el-input clearable v-model="formAddOrUpdate.funName" placeholder="项目名称"></el-input>
+                </el-form-item> 
+                <el-form-item label="品牌" prop="brandName">
+                  <zzu-brand-select v-model="formAddOrUpdate.tblBrandId" placeholder="品牌"></zzu-brand-select>
+                </el-form-item>
+                <el-form-item label="游玩时长" prop="funTime">
+                  <el-input clearable v-model="formAddOrUpdate.funTime" placeholder="游玩时长"></el-input>
+                </el-form-item>
+                <el-form-item label="适合年龄" prop="ageRange">
+                  <el-input clearable v-model="formAddOrUpdate.ageRange" placeholder="适合年龄"></el-input>
+                </el-form-item>
+                <el-form-item label="开放时间" prop="showtime">
+                  <el-input clearable v-model="formAddOrUpdate.showtime" placeholder="开放时间"></el-input>
+                </el-form-item>
+                <el-form-item label="活动类别" prop="funType">
+                  <el-input clearable v-model="formAddOrUpdate.funType" placeholder="活动类别"></el-input>
+                </el-form-item>
+                <el-form-item label="无障碍设施安排及注意事项" prop="noteTypeCodes">
+                  <zzu-udc v-model="formAddOrUpdate.noteTypeCodes" multiple="multiple"
+                          :udc-code="formAddOrUpdate.noteTypeCodeVal" placeholder="无障碍设施安排及注意事项"></zzu-udc>
+                </el-form-item>
+                <el-form-item label="游客须知" prop="notice">
+                  <el-input clearable v-model="formAddOrUpdate.notice" placeholder="游客须知"></el-input>
+                </el-form-item>
+                <el-form-item label="项目内容介绍" prop="content">
+                  <el-input clearable v-model="formAddOrUpdate.content" placeholder="项目内容介绍" autosize type="textarea"></el-input>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" icon="el-icon-plus" @click="submitAddOrUpdate('formLeft')">保存</el-button>
+                  <el-button icon="el-icon-refresh" @click="resetForm('formAddOrUpdate')">重置</el-button>
+                </el-form-item>
+                
+              </el-form>
+          </el-tab-pane>
+          <el-tab-pane label="项目选点" :disabled="!formAddOrUpdate.id">
+              <el-form label-position="top" ref="formRight" :model="formAddOrUpdate" :rules="ruleAddOrUpdate" label-width="80px">
+                <el-form-item label="选择景点"  prop="tblScenicId">
+                  <xyUdcRemote :tblScenicId="formAddOrUpdate.pointDomain.tblScenicId" @xy-change="scenicChangeHandler" url="biz/Scenic/findWithCondition" labelName="scenicName" valueName="id"></xyUdcRemote>
+                </el-form-item>
+                <el-form-item label="详细地址" prop="address">
+                  <el-input clearable v-model="formAddOrUpdate.pointDomain.address" placeholder="点击地图标记选址" ></el-input>
+                </el-form-item>
+                <el-form-item v-if="formAddOrUpdate.pointDomain.tblScenicId">
+                  <gaode-map  v-model="formAddOrUpdate.pointDomain" ></gaode-map>
+                </el-form-item>
+                <el-form-item label="标题" prop="title">
+                  <el-input clearable v-model="formAddOrUpdate.pointDomain.title" placeholder="请输入标题" ></el-input>
+                </el-form-item>
+                <el-form-item label="简述" prop="summary">
+                  <el-input clearable v-model="formAddOrUpdate.pointDomain.summary" placeholder="简单介绍" ></el-input>
+                </el-form-item>
+                <el-form-item label="图片" prop="tblAssetId">
+                  <zzu-upload v-model="formAddOrUpdate.pointDomain.tblAssetId" list-type="picture-card" :limit="1"></zzu-upload>
+                  <div style="color:red">请上传尺寸为670px宽 387px高的图片（宽高比为1.72）</div>
+                </el-form-item>
+                <el-form-item label="选择菜单" prop="fndMenuId">
+                  <el-input clearable v-model="formAddOrUpdate.pointDomain.fndMenuId" placeholder="选择菜单" ></el-input>
+                </el-form-item>
+                <!-- <el-form-item label="选择菜单" prop="fndMenuId">
+                  <el-input clearable v-model="formAddOrUpdate.pointDomain.summary" placeholder="简单介绍" ></el-input>
+                </el-form-item> -->
+                <!-- <el-form-item  label="内容" prop="content">
+                  <richText v-model="formAddOrUpdate.pointDomain.content"></richText>
+                  <el-input clearable v-model="formAddOrUpdate.pointDomain.content" placeholder="点击地图标记选址" ></el-input>
+                </el-form-item> -->
+                <el-form-item>
+                  <el-button type="primary" icon="el-icon-plus" @click="scenicPointSaveOrUpdate('formRight')">保存</el-button>
+                  <el-button icon="el-icon-refresh" @click="resetForm">重置</el-button>
+                </el-form-item>
+              </el-form>
+          </el-tab-pane>
+        </el-tabs>
+      </el-card>
+    </div>
+  </div>
+</template>
+
+<script type="text/babel">
+  import zzuCitySelect from '@/components/city-select'
+  import zzuUdc from '@/components/udc'
+  import zzuMap from '@/components/map'
+  import zzuBrandSelect from '@/components/brand-select'
+  import zzuUpload from '@/components/upload'
+  import GaodeMap from  '@/components/xy-map'
+  import xyUdcRemote from  '@/components/xy-udc-remote'
+  import richText from  '@/components/rich-text'
+
+  const defForm = {
+      id: null,			//id
+      fndCityId:'',//所在城市id
+      fndAreaId:'', //区县id
+      tblScenicPoint:'',//项目坐标
+      tblBrandId:'',//品牌id
+      funTime:'', //游玩时长
+      funName:'',//项目名称   //
+      ageRange:'',//适合年龄  //
+      showtime:'',//开放时间 //
+      funType:'',//活动类别 //
+      noteTypeCodes:[], //无障碍设施安排及注意事项@UDC_M03_T13 //
+      noteTypeCodeVal:'UDC_M03_T13',
+      notice:'', //游客须知 //
+      content:'',	//内容 
+      pointDomain:{  // 标记点表单
+          centerLat:'',//中心纬度
+          centerLng:'',//中心经度
+          lng:'',			//经度
+          lat:'',			//纬度
+          tableId:null,		//业务表id   关键字
+          cityId:'',		//城市id
+          tblScenicId:null,	//景区id
+          fndAddressId:'',//地址表id
+          address:'',		//详细地址,
+          fndMenuId:'',	//菜单id  下拉选选菜单
+          tableName:'TBL_FUN',	//业务表名
+          tblAssetId:[],	//资源id   上传图片
+          voiceAssetId:'',	//语音资源id   
+          title:'',		//标题
+          summary:'',		//简述
+          content:'',	//内容   富文本
+      }
+  }
+  export default {
+    name: "userList",
+    components: { zzuCitySelect, zzuUdc, zzuMap, zzuBrandSelect,zzuUpload,GaodeMap,xyUdcRemote,richText },
+    data() {
+      return {
+        flag:0,
+        xianshi:0,
+        cfg: {
+          formIcon: 'plus',
+          resetPwdBtn: true,
+          delBtn: true,
+          resetPwdModal: false,
+        },
+        formStatus: false,
+        tblAssetId:[],
+        formAddOrUpdate: {...defForm},
+        ruleAddOrUpdate: {
+          tblScenicId: [
+            {required: true, message: '请选择景点', trigger: 'blur'}
+          ],
+          funName:[
+            {required: true, message: '请填写项目', trigger: 'blur'}
+          ],
+          noteTypeCodes: [
+            {required: true, message: '请选择', trigger: 'blur'}
+          ],
+          
+        },
+        tableList: {
+          title: "项目列表",
+          query: {
+            id:'',
+          	cityId: '',
+            search: '',
+            pageNum: 1,
+            pageSize: this.$appCfg.paginationCfg.pageSize,
+            sort: 'id',
+            order: 'desc'
+          },
+          selection: [],
+          loading: false,
+          columns: [
+            {
+              type: 'selection',
+              width: 35,
+              key: 'id',
+              align: 'center',
+              fixed: 'left'
+            }, {
+              title: '项目名称',
+              key: 'funName',
+              width: 200,
+              fixed: 'left',
+              sortable: true
+            },{
+              title: '活动类别',
+              key: 'funType',
+              width:200,
+              sortable: true
+            }, {
+              title: '开放时间',
+              key: 'showtime',
+              width:200,
+              sortable: true
+            }, {
+              title: '游玩时长',
+              key: 'funTime',
+              width:200,
+              sortable: true 
+            },{
+              title: '适合年龄',
+              key: 'ageRange',
+              width:200,
+              sortable: true
+            },{
+              title: '品牌',
+              key: 'brandName',
+              width:200,
+              sortable: true
+            },
+            //  {
+            //   title: '所在城市',
+            //   key: 'cityName',
+            //   width: 100,
+            //   sortable: true
+            // },
+             {
+              title: '详细地址',
+              key: 'address',
+              width: 300,
+              sortable: true
+            },{
+              title: '注意事项',
+              key: 'notice',
+              width: 100,
+              sortable: true
+            },
+             {
+              title: "内容描述",
+              sortable: true,
+              width: 300,
+              key: 'content'
+            },
+             {
+              title: '无障碍设施安排',
+              width: 260,
+              key: 'noteTypeCodeDescs',
+            },
+            {
+              title: '创建时间',
+              key: 'createdTime',
+              sortable: true
+            },{
+              title: '创建人员',
+              key: 'ownerName',
+              width:100,
+              sortable: true
+            },{
+              title: '更新时间',
+              key: 'updatedTime',
+              sortable: true
+            },{
+              title: '修改人员',
+              key: 'opUserName',
+              width:100,
+              sortable: true
+            },
+          ],
+          data: {
+            total: 0,
+            rows: [],
+          }
+        },
+        page: {
+          currentPage: 1,
+          pageSizes: this.$appCfg.paginationCfg.pageSizes,
+          pageSize: this.$appCfg.paginationCfg.pageSize,
+          total: 0
+        }
+      } 
+    },
+    watch: {
+      'tableList.query': {
+        handler (newValue, oldValue) {
+          this.findPage();
+        },
+        deep: true
+      },
+      'tableList.selection'(newValue, oldValue) {
+        if (newValue.length > 0) {
+          for (let obj in this.formAddOrUpdate) {
+            if (obj == "noteTypeCodes"){
+              this.formAddOrUpdate[obj] = newValue[0][obj]
+            }else if(obj == "noteTypeCodeVal"){
+              this.formAddOrUpdate[obj] = 'UDC_M03_T13';
+            }else if(obj == "id"){
+              this.formAddOrUpdate[obj]= newValue[0][obj];
+              this.formAddOrUpdate.pointDomain.tableId = newValue[0][obj];
+            } else if (obj == "pointDomain"){
+              this.formAddOrUpdate.pointDomain.centerLat = newValue[0][obj].lat;
+              this.formAddOrUpdate.pointDomain.centerLng = newValue[0][obj].lng;
+              this.formAddOrUpdate.pointDomain.tblScenicId =  newValue[0][obj].tblScenicId;
+              this.formAddOrUpdate.pointDomain.tableName = 'TBL_FUN';
+              this.formAddOrUpdate.pointDomain.tblAssetId = [newValue[0][obj].tblAssetId];
+            }else {
+              this.formAddOrUpdate[obj] = newValue[0][obj];
+            }
+          }
+          
+          console.log('id',this.formAddOrUpdate.pointDomain.tblAssetId);
+        } else {
+          this.resetForm();
+        }
+      },
+      'formAddOrUpdate.pointDomain.tblAssetId'(newValue, oldValue) {
+        console.log(newValue[0]);
+        if (newValue) {
+          this.formAddOrUpdate.pointDomain.tblAssetId= newValue;
+        } else {
+          this.formAddOrUpdate.pointDomain.tblAssetId = [];
+        }
+        console.log('tblAssetId',this.formAddOrUpdate.pointDomain.tblAssetId);
+      },
+      'formAddOrUpdate.pointDomain.tblScenicId':{
+        handler (newValue, oldValue) {
+          if(newValue){
+            this.formAddOrUpdate.pointDomain.tblScenicId = newValue
+          }else{
+            this.formAddOrUpdate.pointDomain.tblScenicId = null;
+          }
+        },
+        deep: true
+      }
+    },
+    mounted () {
+      this.findPage();
+    },
+    methods: {
+      scenicChangeHandler(v){
+        if(v!=0){
+          this.xianshi=1;
+        }else{
+          this.xianshi=0;
+        }
+        this.formAddOrUpdate.pointDomain.tblScenicId = v.id;
+        this.formAddOrUpdate.pointDomain.centerLat = v.centerLat;
+        this.formAddOrUpdate.pointDomain.centerLng = v.centerLng;
+      },
+      findPage() {
+        // 获取列表数据
+        this.$http.get('biz/Fun/list',
+           { params: this.tableList.query }
+          ).then(rs => {
+            if(rs.data.code == 0) {
+              this.page.total = rs.data.data.total;
+              rs.data.data.rows.forEach(r => {
+                if (r.noteTypeCodeDescs && r.noteTypeCodeDescs instanceof Array) {
+                 r.noteTypeCodeDescs = r.noteTypeCodeDescs.join("、");
+                }
+              });
+              this.tableList.data.rows = rs.data.data.rows;
+            } else {
+              this.page.total = 0;
+              this.tableList.data.rows = [];
+            }
+          }).catch(() => {
+              this.page.total = 0;
+              this.tableList.data.rows = []
+            }
+          )
+      },
+      submitAddOrUpdate(formName) {
+         // 表单验证后可提交
+        this.$refs[formName].validate((valid) => {
+          if (valid) {
+            this.saveOrUpdate(this.formAddOrUpdate);
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      },
+      saveOrUpdate (formAddOrUpdate) {
+        if(this.formStatus) return;
+        this.formStatus = true;
+        console.log(this.formAddOrUpdate);
+        let data = this.saveOrUpdateAddress(formAddOrUpdate);
+       
+        // 更新或保存信息
+        this.$http.post('biz/Fun/saveOrUpdate',
+          data
+          ).then(rs => {
+            this.formStatus = false;
+            if(rs.data.code == 0) {
+              this.$message({
+                type: 'success',
+                message: '创建项目成功!'
+              });
+              this.flag=1;
+              // this.findPage();
+              this.resetForm();
+              this.formAddOrUpdate.id = rs.data.data.id;
+              this.formAddOrUpdate.pointDomain.tableId=rs.data.data.id;
+            } else {
+              this.flag=0;
+              this.$message({
+                type: 'fail',
+                message: '操作失败!'
+              });
+            }
+          }).catch();
+      },
+      //  项目标保存
+      scenicPointSaveOrUpdate () {
+        if(this.formStatus) return;
+        this.formStatus = true;
+        let data = this.formAddOrUpdate.pointDomain;
+        this.$http.post('biz/ScenicPoint/saveOrUpdate',
+          data
+          ).then(rs => {
+            this.formStatus = false;
+            if(rs.data.code == 0) {
+              this.$message({
+                type: 'success',
+                message: '操作成功!'
+              });
+              this.findPage();
+              this.resetForm();
+            } else {
+              this.$message({
+                type: 'fail',
+                message: '操作失败!'
+              });
+            }
+          }).catch();
+      },
+      resetForm() {
+        this.formAddOrUpdate = {...defForm}
+      },
+      deleteData() {
+        // 删除数据
+        let data = [];
+        this.tableList.selection.map(item => {
+          data.push(item.id);
+        });
+        this.$confirm(`此操作将永久删除, 是否继续?`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.$http.post('biz/Fun/remove',
+            data
+          ).then(rs => {
+            if(rs.data.code == 0) {
+              this.findPage();
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              });
+            } else {
+              this.$message({
+                type: 'warning',
+                message: '删除失败！'
+              });
+            }
+          }).catch();
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          });
+        });
+      },
+      handleSelectionChange(val) {
+        // table选中改变
+        this.formAddOrUpdate = val[0];
+        this.tableList.selection = val.sort(function (a, b) {
+          return a.id > b.id;
+        });
+      },
+      handlePageSizeChange(val) {
+        // 每页数量改变
+        this.tableList.query.pageSize = val;
+      },
+      handlePageCurrentChange(val) {
+        // 当前页改变
+        this.tableList.query.pageNum = val;
+      }
+    }
+  }
+</script>
+
+<style lang="scss">
+  @import '~@/assets/css/core/index';
+  @import '~@/assets/css/base-block';
+</style>

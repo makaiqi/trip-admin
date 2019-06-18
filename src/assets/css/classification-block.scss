@@ -1,0 +1,37 @@
+// 基本增删改查样式表
+
+@import "~@/assets/css/core/index";
+
+.classification-block {
+  width: 100%;
+  min-width: 600px;
+  padding: 20px;
+  display: flex;
+  flex-direction: row;
+
+  .el-date-editor { 
+      &.el-input, &.el-input__inner {
+        width: 100%;
+      }
+    }
+}
+
+.classification-block-left {
+  flex: 1;
+  width: 0;
+  overflow: hidden;
+}
+
+.classification-block-right {
+  width: 300px;
+  margin-left: 20px;
+}
+
+.classification-block-table {
+  margin-bottom: 20px;
+}
+
+.classification-block-add {
+  padding: $padding;
+}
+

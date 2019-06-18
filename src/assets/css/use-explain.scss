@@ -1,0 +1,77 @@
+.purchase .heder-title-h3 {
+	text-align: left;
+	margin-top: 0px;
+}
+
+.purchase {
+	text-align: center;
+	position: relative;
+}
+
+.purchase-form {
+	display: inline-block;
+	text-align: left;
+	width: 80%;
+	/*border: 1px solid red;*/	
+}
+
+.purchase .el-radio {
+	color: #606266;
+	font-weight: 500;
+	line-height: 1;
+	cursor: pointer;
+	white-space: nowrap;
+	outline: 0;
+	margin-bottom: 20px;
+}
+
+
+/*radio提示框*/
+
+
+/*.radio-item .el-form-item--small .el-form-item__error {
+    padding-top: 2px;
+    display: none!important;
+	}*/
+
+.advance-ipt {
+	width: 60px;
+}
+
+.purchase-form-radio {
+	display: inline-block;
+	line-height: 1;
+	vertical-align: middle;
+	margin-top: 10px;
+	font-size: 0;
+}
+
+
+/*游玩人信息模板文本*/
+
+.play-informations-model-text, .use-informations-model-text, .drawer_way_text{
+	width: 100%;
+	background-color: #fafafa;
+	border: 1px solid #ccd2df;
+	padding: 10px;
+}
+
+.play-text-prompt, .use-text-prompt{
+	font-size: 12px;
+	color: red;
+}
+
+.park-content{
+	margin-top: 40px;
+}
+.title-h3{
+	position: absolute;
+	left: 0%;
+}
+.drawer_way_text{
+	border-radius: 2px;
+  background-color: #fff7e4;
+  border: 1px solid #ffe5b8;
+  line-height: 20px;
+}
+
