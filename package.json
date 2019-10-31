@@ -27,7 +27,7 @@
     "qiniu-js": "^2.2.2",
     "rambda": "^1.1.0",
     "ramda": "^0.25.0",
-    "swagger-ui": "^3.13.5",
+    "swagger-ui": "^3.23.11",
     "vue": "^2.5.16",
     "vue-amap": "^0.5.9",
     "vue-baidu-map": "^0.21.10",
